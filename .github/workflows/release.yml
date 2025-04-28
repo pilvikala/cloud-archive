@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v1.*"
+      - "v0.*"
 
 jobs:
   release:
@@ -21,20 +22,58 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build project
-        run: npm run build
-
       - name: Build binaries
         run: npm run build:all
+
+      - name: version
+        run: echo "::set-output name=version::$(./dist/linux-x64/cloud-archive version)"
+        id: version
+
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref }}
+          body_path: CHANGELOG.md
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
+          name: macos-x64
           path: |
             dist/macos-x64/cloud-archive
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64
+          path: |
             dist/macos-arm64/cloud-archive
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: |
             dist/linux-x64/cloud-archive
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64
+          path: |
             dist/linux-arm64/cloud-archive
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-x64
+          path: |
             dist/win-x64/cloud-archive.exe
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-arm64
+          path: |
             dist/win-arm64/cloud-archive.exe

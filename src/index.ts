@@ -3,14 +3,22 @@
 import { Command } from "commander";
 import { GcpClient } from "./lib/gcp-client";
 import { SyncClient } from "./lib/sync-client";
+import { displayFileSize } from "./lib/display-file-size";
+import { version } from "./version";
 
 const program = new Command();
 
 program
   .name("cloud-archive")
   .description("A CLI tool to sync a directory to a GCP storage bucket")
-  .version("1.0.0");
+  .version(version);
 
+program
+  .command("version")
+  .description("show version")
+  .action(async () => {
+    console.log(version);
+  });
 program
   .command("upload <bucket> <filePath> <destinationPath>")
   .description("Upload a file to Google Cloud Storage")
@@ -49,7 +57,9 @@ program
       const syncClient = new SyncClient(path, gcpClient);
       await syncClient.sync((p) => {
         console.log(
-          `Uploaded ${p.fileCount} of ${p.totalFiles}. Size: ${p.sizeUploaded}/${p.totalSize}`
+          `Uploaded ${p.fileCount} of ${p.totalFiles}. Size: ${displayFileSize(
+            p.sizeUploaded
+          )}/${displayFileSize(p.totalSize)}`
         );
       });
     } catch (error) {

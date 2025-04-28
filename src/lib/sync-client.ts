@@ -1,6 +1,7 @@
 import { GcpClient } from "./gcp-client";
 import * as fs from "fs";
 import * as path from "path";
+import { displayFileSize } from "./display-file-size";
 
 export interface SyncProgress {
   fileCount: number;
@@ -82,7 +83,7 @@ export class SyncClient {
     console.log("Getting the list of files...");
     const files = await this.listFiles();
     const filesToUpload = await this.getFilesToUpload(files);
-    const totalFiles = files.length;
+    const totalFiles = filesToUpload.length;
     let fileCount = 0;
     let sizeUploaded = 0;
     let totalSize = 0;
@@ -92,7 +93,11 @@ export class SyncClient {
     for (const [, , size] of filesToUpload) {
       totalSize += size;
     }
-    console.log(`Will upload ${totalFiles} files, total size ${totalSize}`);
+    console.log(
+      `Will upload ${filesToUpload.length} files, total size ${displayFileSize(
+        totalSize
+      )}`
+    );
     console.log("Starting upload");
     // Upload files one by one
     for (const [absolutePath, relativePath, size] of filesToUpload) {
