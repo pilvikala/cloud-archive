@@ -53,6 +53,7 @@ export class SyncClient {
   private async getFilesToUpload(
     files: [string, string][]
   ): Promise<[string, string, number][]> {
+    console.log("Checking target bucket");
     const existingFiles = await this.gcpClient.listContent(
       this.gcpClient["bucketName"],
       ""
@@ -78,9 +79,9 @@ export class SyncClient {
   async sync(
     onProgress: (progress: SyncProgress) => void
   ): Promise<SyncResult> {
+    console.log("Getting the list of files...");
     const files = await this.listFiles();
     const filesToUpload = await this.getFilesToUpload(files);
-
     const totalFiles = files.length;
     let fileCount = 0;
     let sizeUploaded = 0;
@@ -91,7 +92,8 @@ export class SyncClient {
     for (const [, , size] of filesToUpload) {
       totalSize += size;
     }
-
+    console.log(`Will upload ${totalFiles} files, total size ${totalSize}`);
+    console.log("Starting upload");
     // Upload files one by one
     for (const [absolutePath, relativePath, size] of filesToUpload) {
       try {
