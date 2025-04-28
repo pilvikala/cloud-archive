@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - "v1.*"
-      - "v0.*"
 
 jobs:
   release:
@@ -38,6 +37,8 @@ jobs:
           release_name: ${{ steps.version.outputs.version }}
           tag_name: ${{ github.ref }}
           body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
