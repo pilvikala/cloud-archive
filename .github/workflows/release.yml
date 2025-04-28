@@ -25,19 +25,19 @@ jobs:
         run: npm run build:all
 
       - name: version
-        run: echo "::set-output name=version::$(./dist/linux-x64/cloud-archive version)"
+        run: echo "RELEASE_VERSION=$(./dist/linux-x64/cloud-archive version)" >> $GITHUB_OUTPUT
         id: version
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GH_TOKEN }}"
           prerelease: false
-          title: ${{ steps.version.outputs.version }}
+          title: ${{ env.RELEASE_VERSION }}
           tag: ${{ github.ref }}
           files: |
-            dist/win-arm64/cloud-archive.exe
-            dist/win-x64/cloud-archive.exe
-            dist/linux-arm64/cloud-archive
-            dist/linux-x64/cloud-archive
-            dist/macos-arm64/cloud-archive
-            dist/macos-x64/cloud-archive
+            dist/tar/win-arm64
+            dist/tar/win-x64.tar
+            dist/tar/linux-arm64.tar
+            dist/tar/linux-x64.tar
+            dist/tar/macos-arm64.tar
+            dist/tar/macos-x64.tar
