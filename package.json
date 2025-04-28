@@ -1,0 +1,37 @@
+{
+  "name": "cloud-archive",
+  "version": "1.0.0",
+  "description": "A CLI tool",
+  "main": "dist/index.js",
+  "bin": {
+    "cloud-archive": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "build:macos-x64": "pkg . --targets node18-macos-x64 --output dist/macos-x64/cloud-archive",
+    "build:macos-arm64": "pkg . --targets node18-macos-arm64 --output dist/macos-arm64/cloud-archive",
+    "build:linux-x64": "pkg . --targets node18-linux-x64 --output dist/linux-x64/cloud-archive",
+    "build:linux-arm64": "pkg . --targets node18-linux-arm64 --output dist/linux-arm64/cloud-archive",
+    "build:win-x64": "pkg . --targets node18-win-x64 --output dist/win-x64/cloud-archive.exe",
+    "build:win-arm64": "pkg . --targets node18-win-arm64 --output dist/win-arm64/cloud-archive.exe",
+    "build:all": "npm run build && npm run build:macos-x64 && npm run build:macos-arm64 && npm run build:linux-x64 && npm run build:linux-arm64 && npm run build:win-x64 && npm run build:win-arm64"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "@google-cloud/storage": "^7.7.0",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "pkg": "^5.8.1"
+  }
+}
