@@ -28,53 +28,16 @@ jobs:
         run: echo "::set-output name=version::$(./dist/linux-x64/cloud-archive version)"
         id: version
 
-      - name: release
-        uses: actions/create-release@v1
-        id: create_release
+      - uses: "marvinpinto/action-automatic-releases@latest"
         with:
-          draft: false
+          repo_token: "${{ secrets.GH_TOKEN }}"
           prerelease: false
-          release_name: ${{ steps.version.outputs.version }}
-          tag_name: ${{ github.ref }}
-          body_path: CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-x64
-          path: |
-            dist/macos-x64/cloud-archive
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-arm64
-          path: |
-            dist/macos-arm64/cloud-archive
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-x64
-          path: |
-            dist/linux-x64/cloud-archive
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-arm64
-          path: |
-            dist/linux-arm64/cloud-archive
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: win-x64
-          path: |
-            dist/win-x64/cloud-archive.exe
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: win-arm64
-          path: |
+          title: ${{ steps.version.outputs.version }}
+          tag: ${{ github.ref }}
+          files: |
             dist/win-arm64/cloud-archive.exe
+            dist/win-x64/cloud-archive.exe
+            dist/linux-arm64/cloud-archive
+            dist/linux-x64/cloud-archive
+            dist/macos-arm64/cloud-archive
+            dist/macos-x64/cloud-archive
