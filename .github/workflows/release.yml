@@ -63,6 +63,9 @@ jobs:
           retention-days: 1
     
   release:
+    needs: 
+      - build-windows
+      - build-linux
     runs-on: ubuntu-latest
     steps:
       - name: Get linux build
