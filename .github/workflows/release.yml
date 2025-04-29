@@ -35,9 +35,6 @@ jobs:
           title: ${{ env.RELEASE_VERSION }}
           tag: ${{ github.ref }}
           files: |
-            dist/tar/win-arm64
             dist/tar/win-x64.tar
             dist/tar/linux-arm64.tar
             dist/tar/linux-x64.tar
-            dist/tar/macos-arm64.tar
-            dist/tar/macos-x64.tar

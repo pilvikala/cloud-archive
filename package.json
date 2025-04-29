@@ -18,7 +18,7 @@
     "build:linux-arm64": "pkg . --targets node22-linux-arm64 --output dist/linux-arm64/cloud-archive && mkdir -p dist/tar && cd dist/linux-arm64 && tar -c cloud-archive>../tar/linux-arm64.tar",
     "build:win-x64": "pkg . --targets node22-win-x64 --output dist/win-x64/cloud-archive.exe && mkdir -p dist/tar && cd dist/win-x64 && tar -c cloud-archive.exe>../tar/win-x64.tar",
     "build:win-arm64": "pkg . --targets node22-win-arm64 --output dist/win-arm64/cloud-archive.exe && mkdir -p dist/tar && cd dist/win-arm64 && tar -c cloud-archive.exe>../tar/win-arm64.tar",
-    "build:all": "npm run build && npm run build:macos-x64 && npm run build:macos-arm64 && npm run build:linux-x64 && npm run build:linux-arm64 && npm run build:win-x64 && npm run build:win-arm64"
+    "build:all": "npm run build && npm run build:linux-x64 && npm run build:linux-arm64 && npm run build:win-x64"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.7.0",
