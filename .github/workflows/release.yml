@@ -27,11 +27,11 @@ jobs:
       - name: Build binaries
         run: npm run build:linux-x64
 
-      - name: Temporarily build artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-x64
-          path: dist/tar/linux-x64.tar
+          path: dist/linux-x64.tar
           retention-days: 1
 
   build-windows:
@@ -55,11 +55,11 @@ jobs:
       - name: Build binaries
         run: npm run build:win-x64
 
-      - name: Temporarily build artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: win-x64
-          path: dist/tar/win-x64.tar
+          path: dist/win-x64.tar
           retention-days: 1
     
   release:

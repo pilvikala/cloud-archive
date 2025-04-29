@@ -12,13 +12,12 @@
     "dev": "ts-node src/index.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "build:macos-x64": "pkg . --targets node22-macos-x64 --output dist/macos-x64/cloud-archive && mkdir -p dist/tar && cd dist/macos-x64 && tar -c cloud-archive>../tar/macox-x64.tar",
-    "build:macos-arm64": "pkg . --targets node22-macos-arm64 --output dist/macos-arm64/cloud-archive && mkdir -p dist/tar && cd dist/macos-arm64 && tar -c cloud-archive>../tar/macox-arm64.tar",
-    "build:linux-x64": "pkg . --targets node22-linux-x64 --output dist/linux-x64/cloud-archive && mkdir -p dist/tar && cd dist/linux-x64 && tar -c cloud-archive>../tar/linux-x64.tar",
-    "build:linux-arm64": "pkg . --targets node22-linux-arm64 --output dist/linux-arm64/cloud-archive && mkdir -p dist/tar && cd dist/linux-arm64 && tar -c cloud-archive>../tar/linux-arm64.tar",
-    "build:win-x64": "pkg . --targets node22-win-x64 --output dist/win-x64/cloud-archive.exe && mkdir -p dist/tar && cd dist/win-x64 && tar -c cloud-archive.exe>../tar/win-x64.tar",
-    "build:win-arm64": "pkg . --targets node22-win-arm64 --output dist/win-arm64/cloud-archive.exe && mkdir -p dist/tar && cd dist/win-arm64 && tar -c cloud-archive.exe>../tar/win-arm64.tar",
-    "build:all": "npm run build && npm run build:linux-x64 && npm run build:linux-arm64 && npm run build:win-x64"
+    "build:macos-x64": "pkg . --targets node22-macos-x64 --output dist/macos-x64/cloud-archive && tar -c dist/macos-x64/cloud-archive>dist/macox-x64.tar",
+    "build:macos-arm64": "pkg . --targets node22-macos-arm64 --output dist/macos-arm64/cloud-archive && tar -c dist/macos-arm64/cloud-archive>dist/macox-arm64.tar",
+    "build:linux-x64": "pkg . --targets node22-linux-x64 --output dist/linux-x64/cloud-archive tar -c dist/linux-x64/cloud-archive>dist/linux-x64.tar",
+    "build:linux-arm64": "pkg . --targets node22-linux-arm64 --output dist/linux-arm64/cloud-archive && tar -c dist/linux/arm-64/cloud-archive>dist/linux-arm64.tar",
+    "build:win-x64": "pkg . --targets node22-win-x64 --output dist/win-x64/cloud-archive.exe && tar -c dist/win-x64/cloud-archive.exe>dist/win-x64.tar",
+    "build:win-arm64": "pkg . --targets node22-win-arm64 --output dist/win-arm64/cloud-archive.exe && tar -c dist/win-arm64/cloud-archive.exe>dist/win-arm64.tar"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.7.0",
