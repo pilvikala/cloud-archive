@@ -34,37 +34,37 @@ jobs:
           path: dist/linux-x64.tar
           retention-days: 1
 
-  build-windows:
-    runs-on: windows-latest
+  # build-windows:
+  #   runs-on: windows-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "22"
+  #         cache: "npm"
 
-      - name: Install dependencies
-        run: npm install
+  #     - name: Install dependencies
+  #       run: npm install
 
-      - name: Build project
-        run: npm run build
+  #     - name: Build project
+  #       run: npm run build
 
-      - name: Build binaries
-        run: npm run build:win-x64
+  #     - name: Build binaries
+  #       run: npm run build:win-x64
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: win-x64
-          path: dist/win-x64.tar
-          retention-days: 1
+  #     - name: Upload build artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: win-x64
+  #         path: dist/win-x64.tar
+  #         retention-days: 1
     
   release:
     needs: 
-      - build-windows
+      # - build-windows
       - build-linux
     runs-on: ubuntu-latest
     steps:
