@@ -87,5 +87,4 @@ jobs:
           title: ${{ github.ref }}
           tag: ${{ github.ref }}
           files: |
-            win-x64.tar
             linux-x64.tar
