@@ -1,6 +1,6 @@
 {
   "name": "cloud-archive",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A CLI tool",
   "main": "dist/index.js",
   "bin": {

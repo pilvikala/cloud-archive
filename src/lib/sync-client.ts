@@ -17,10 +17,16 @@ export interface SyncResult {
 
 export class SyncClient {
   private localPath: string;
+  private destinationPath: string;
   private gcpClient: GcpClient;
 
-  constructor(localPath: string, gcpClient: GcpClient) {
+  constructor(
+    localPath: string,
+    destinationPath: string,
+    gcpClient: GcpClient
+  ) {
     this.localPath = localPath;
+    this.destinationPath = destinationPath;
     this.gcpClient = gcpClient;
   }
 
@@ -56,8 +62,8 @@ export class SyncClient {
   ): Promise<[string, string, number][]> {
     console.log("Checking target bucket");
     const existingFiles = await this.gcpClient.listContent(
-      this.gcpClient["bucketName"],
-      ""
+      this.gcpClient.bucketName,
+      this.destinationPath
     );
     const existingFilesMap = new Map(
       existingFiles.map((file) => [file.name, file.size])
@@ -67,10 +73,11 @@ export class SyncClient {
 
     for (const [absolutePath, relativePath] of files) {
       const stats = await fs.promises.stat(absolutePath);
-      const existingSize = existingFilesMap.get(relativePath);
+      const destinationPath = path.join(this.destinationPath, relativePath);
+      const existingSize = existingFilesMap.get(destinationPath);
 
       if (!existingSize || existingSize !== stats.size) {
-        filesToUpload.push([absolutePath, relativePath, stats.size]);
+        filesToUpload.push([absolutePath, destinationPath, stats.size]);
       }
     }
 
@@ -100,12 +107,12 @@ export class SyncClient {
     );
     console.log("Starting upload");
     // Upload files one by one
-    for (const [absolutePath, relativePath, size] of filesToUpload) {
+    for (const [absolutePath, destinationPath, size] of filesToUpload) {
       try {
-        await this.gcpClient.uploadFile(absolutePath, relativePath);
+        await this.gcpClient.uploadFile(absolutePath, destinationPath);
         sizeUploaded += size;
         fileCount++;
-        uploadedFiles.push(relativePath);
+        uploadedFiles.push(destinationPath);
 
         onProgress({
           fileCount,
@@ -114,7 +121,7 @@ export class SyncClient {
           totalSize,
         });
       } catch (error) {
-        console.error(`Failed to upload ${relativePath}:`, error);
+        console.error(`Failed to upload ${destinationPath}:`, error);
         // Continue with next file even if one fails
       }
     }

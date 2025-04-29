@@ -49,12 +49,12 @@ program
   });
 
 program
-  .command("sync <bucket> <path>")
-  .description("Sync folder with the bucket")
-  .action(async (bucket: string, path: string) => {
+  .command("sync <bucket> <path> <destinationPath>")
+  .description("Sync folder with the bucket at the specified destination path")
+  .action(async (bucket: string, path: string, destinationPath: string) => {
     try {
       const gcpClient = new GcpClient(bucket);
-      const syncClient = new SyncClient(path, gcpClient);
+      const syncClient = new SyncClient(path, destinationPath, gcpClient);
       await syncClient.sync((p) => {
         console.log(
           `Uploaded ${p.fileCount} of ${p.totalFiles}. Size: ${displayFileSize(
