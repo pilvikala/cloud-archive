@@ -14,8 +14,8 @@
     "test:watch": "jest --watch",
     "build:macos-x64": "pkg . --targets node22-macos-x64 --output dist/macos-x64/cloud-archive && tar -c dist/macos-x64/cloud-archive>dist/macox-x64.tar",
     "build:macos-arm64": "pkg . --targets node22-macos-arm64 --output dist/macos-arm64/cloud-archive && tar -c dist/macos-arm64/cloud-archive>dist/macox-arm64.tar",
-    "build:linux-x64": "pkg . --targets node22-linux-x64 --output dist/linux-x64/cloud-archive tar -c dist/linux-x64/cloud-archive>dist/linux-x64.tar",
-    "build:linux-arm64": "pkg . --targets node22-linux-arm64 --output dist/linux-arm64/cloud-archive && tar -c dist/linux/arm-64/cloud-archive>dist/linux-arm64.tar",
+    "build:linux-x64": "pkg . --targets node22-linux-x64 --output dist/linux-x64/cloud-archive && tar -c dist/linux-x64/cloud-archive>dist/linux-x64.tar",
+    "build:linux-arm64": "pkg . --targets node22-linux-arm64 --output dist/linux-arm64/cloud-archive && tar -c dist/linux-arm64/cloud-archive>dist/linux-arm64.tar",
     "build:win-x64": "pkg . --targets node22-win-x64 --output dist/win-x64/cloud-archive.exe && tar -c dist/win-x64/cloud-archive.exe>dist/win-x64.tar",
     "build:win-arm64": "pkg . --targets node22-win-arm64 --output dist/win-arm64/cloud-archive.exe && tar -c dist/win-arm64/cloud-archive.exe>dist/win-arm64.tar"
   },
