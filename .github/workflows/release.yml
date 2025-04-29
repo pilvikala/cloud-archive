@@ -74,11 +74,11 @@ jobs:
           name: linux-x64
           path: linux-x64.tar
 
-      - name: Get linux build
-        uses: actions/download-artifact@v4
-        with:
-          name: win-x64
-          path: win-x64.tar
+      # - name: Get windows build
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: win-x64
+      #     path: win-x64.tar
   
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
