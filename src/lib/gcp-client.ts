@@ -19,7 +19,7 @@ export interface FileMetadata {
 
 export class GcpClient {
   private storage: Storage;
-  private bucketName: string;
+  public bucketName: string;
 
   constructor(bucketName: string) {
     this.checkCredentials();
