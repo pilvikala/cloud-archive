@@ -6,7 +6,7 @@ on:
       - "v1.*"
 
 jobs:
-  release:
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,22 +19,72 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build project
         run: npm run build
 
       - name: Build binaries
-        run: npm run build:all
+        run: npm run build:linux-x64
 
-      - name: Upload artifacts
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
-          path: |
-            dist/macos-x64/cloud-archive
-            dist/macos-arm64/cloud-archive
-            dist/linux-x64/cloud-archive
-            dist/linux-arm64/cloud-archive
-            dist/win-x64/cloud-archive.exe
-            dist/win-arm64/cloud-archive.exe
+          name: linux-x64
+          path: dist/linux-x64.tar
+          retention-days: 1
+
+  # build-windows:
+  #   runs-on: windows-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "22"
+  #         cache: "npm"
+
+  #     - name: Install dependencies
+  #       run: npm install
+
+  #     - name: Build project
+  #       run: npm run build
+
+  #     - name: Build binaries
+  #       run: npm run build:win-x64
+
+  #     - name: Upload build artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: win-x64
+  #         path: dist/win-x64.tar
+  #         retention-days: 1
+    
+  release:
+    needs: 
+      # - build-windows
+      - build-linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get linux build
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-x64
+          path: linux-x64.tar
+
+      # - name: Get windows build
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: win-x64
+      #     path: win-x64.tar
+  
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GH_TOKEN }}"
+          prerelease: false
+          title: ${{ github.ref }}
+          tag: ${{ github.ref }}
+          files: |
+            linux-x64.tar
