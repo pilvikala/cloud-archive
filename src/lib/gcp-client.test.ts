@@ -66,6 +66,44 @@ describe("GcpClient", () => {
         gcpClient.uploadFile(mockFilePath, mockDestinationPath)
       ).rejects.toThrow("Upload failed");
     });
+
+    it("should normalize Windows-style paths to use forward slashes", async () => {
+      // Arrange
+      const windowsPath = "path\\in\\bucket\\file.txt";
+      const expectedPath = "path/in/bucket/file.txt";
+      const mockStorage = new Storage();
+      const mockBucket = mockStorage.bucket(mockBucketName);
+
+      // Act
+      await gcpClient.uploadFile(mockFilePath, windowsPath);
+
+      // Assert
+      expect(mockBucket.upload).toHaveBeenCalledWith(mockFilePath, {
+        destination: expectedPath,
+        metadata: {
+          cacheControl: "public, max-age=31536000",
+        },
+      });
+    });
+
+    it("should handle paths with mixed separators", async () => {
+      // Arrange
+      const mixedPath = "path\\in/bucket\\file.txt";
+      const expectedPath = "path/in/bucket/file.txt";
+      const mockStorage = new Storage();
+      const mockBucket = mockStorage.bucket(mockBucketName);
+
+      // Act
+      await gcpClient.uploadFile(mockFilePath, mixedPath);
+
+      // Assert
+      expect(mockBucket.upload).toHaveBeenCalledWith(mockFilePath, {
+        destination: expectedPath,
+        metadata: {
+          cacheControl: "public, max-age=31536000",
+        },
+      });
+    });
   });
 
   describe("listContent", () => {
