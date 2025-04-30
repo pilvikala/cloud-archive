@@ -1,6 +1,7 @@
 import { Storage } from "@google-cloud/storage";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
+import * as path from "path";
 
 dotenv.config();
 
@@ -54,14 +55,16 @@ export class GcpClient {
   async uploadFile(filePath: string, destinationPath: string): Promise<void> {
     try {
       const bucket = this.storage.bucket(this.bucketName);
+      // Normalize the destination path to use forward slashes by replacing all backslashes
+      const normalizedDestinationPath = destinationPath.replace(/\\/g, '/');
       await bucket.upload(filePath, {
-        destination: destinationPath,
+        destination: normalizedDestinationPath,
         metadata: {
           cacheControl: "public, max-age=31536000",
         },
       });
       console.log(
-        `File ${filePath} uploaded to gs://${this.bucketName}/${destinationPath}`
+        `File ${filePath} uploaded to gs://${this.bucketName}/${normalizedDestinationPath}`
       );
     } catch (error) {
       console.error("Error uploading file:", error);
