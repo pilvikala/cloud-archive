@@ -3,13 +3,6 @@ import * as fs from "fs";
 import * as path from "path";
 import { displayFileSize } from "./display-file-size";
 
-export interface SyncProgress {
-  fileCount: number;
-  totalFiles: number;
-  sizeUploaded: number;
-  totalSize: number;
-}
-
 export interface SyncResult {
   uploadedFiles: string[];
   totalFilesUploaded: number;
@@ -85,9 +78,9 @@ export class SyncClient {
   }
 
   async sync(
-    onProgress: (progress: SyncProgress) => void
+    onProgress: (message: string) => void
   ): Promise<SyncResult> {
-    console.log("Getting the list of files...");
+    onProgress("Getting the list of files...");
     const files = await this.listFiles();
     const filesToUpload = await this.getFilesToUpload(files);
     const totalFiles = filesToUpload.length;
@@ -100,28 +93,24 @@ export class SyncClient {
     for (const [, , size] of filesToUpload) {
       totalSize += size;
     }
-    console.log(
+    onProgress(
       `Will upload ${filesToUpload.length} files, total size ${displayFileSize(
         totalSize
       )}`
     );
-    console.log("Starting upload");
     // Upload files one by one
     for (const [absolutePath, destinationPath, size] of filesToUpload) {
       try {
+        onProgress(`Uploading ${destinationPath}, size ${displayFileSize(size)}`);
         await this.gcpClient.uploadFile(absolutePath, destinationPath);
         sizeUploaded += size;
         fileCount++;
         uploadedFiles.push(destinationPath);
-
-        onProgress({
-          fileCount,
-          totalFiles,
-          sizeUploaded,
-          totalSize,
-        });
+        onProgress(`Uploaded ${fileCount} of ${totalFiles}. Size: ${displayFileSize(
+            sizeUploaded
+          )}/${displayFileSize(totalSize)}`);
       } catch (error) {
-        console.error(`Failed to upload ${destinationPath}:`, error);
+        onProgress(`Failed to upload ${destinationPath}: ${error}`);
         // Continue with next file even if one fails
       }
     }

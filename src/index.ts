@@ -55,12 +55,8 @@ program
     try {
       const gcpClient = new GcpClient(bucket);
       const syncClient = new SyncClient(path, destinationPath, gcpClient);
-      await syncClient.sync((p) => {
-        console.log(
-          `Uploaded ${p.fileCount} of ${p.totalFiles}. Size: ${displayFileSize(
-            p.sizeUploaded
-          )}/${displayFileSize(p.totalSize)}`
-        );
+      await syncClient.sync((message) => {
+        console.log(message);
       });
     } catch (error) {
       console.error("Failed to sync the folder:", error);
