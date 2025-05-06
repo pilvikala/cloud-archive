@@ -36,7 +36,7 @@ export class SyncClient {
 
       for (const entry of entries) {
         const fullPath = path.join(currentPath, entry.name);
-        const newRelativePath = path.join(relativePath, entry.name);
+        const newRelativePath = path.join(relativePath, entry.name).replace(/\\/g, "/");
 
         if (entry.isDirectory()) {
           await processDirectory(fullPath, newRelativePath);
@@ -66,7 +66,7 @@ export class SyncClient {
 
     for (const [absolutePath, relativePath] of files) {
       const stats = await fs.promises.stat(absolutePath);
-      const destinationPath = path.join(this.destinationPath, relativePath);
+      const destinationPath = path.join(this.destinationPath, relativePath).replace(/\\/g, "/");
       const existingSize = existingFilesMap.get(destinationPath);
 
       if (!existingSize || existingSize !== stats.size) {
