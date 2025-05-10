@@ -59,20 +59,20 @@ describe("SyncClient", () => {
     expect(result.uploadedFiles).toHaveLength(3);
     expect(result.totalFilesUploaded).toBe(3);
     expect(result.uploadedFiles).toContain(
-      path.join(destinationPath, "file1.txt")
+      path.join(destinationPath, "file1.txt").replace(/\\/g, "/")
     );
     expect(result.uploadedFiles).toContain(
-      path.join(destinationPath, "file2.txt")
+      path.join(destinationPath, "file2.txt").replace(/\\/g, "/")
     );
     expect(result.uploadedFiles).toContain(
-      path.join(destinationPath, "subdir/file3.txt")
+      path.join(destinationPath, "subdir/file3.txt").replace(/\\/g, "/")
     );
 
     // Verify uploadFile was called for each file with correct destination paths
     expect(mockGcpClient.uploadFile).toHaveBeenCalledTimes(3);
     expect(mockGcpClient.uploadFile).toHaveBeenCalledWith(
       path.join(tempDir, "file1.txt"),
-      path.join(destinationPath, "file1.txt")
+      path.join(destinationPath, "file1.txt").replace(/\\/g, "/")
     );
     expect(mockGcpClient.listContent).toHaveBeenCalledTimes(1);
     expect(mockGcpClient.listContent).toHaveBeenCalledWith(
@@ -83,15 +83,15 @@ describe("SyncClient", () => {
 
   it("should skip existing files with same size", async () => {
     // Mock existing files in bucket
-    const file1Stats = await fs.promises.stat(path.join(tempDir, "file1.txt"));
+    const file1Stats = await fs.promises.stat(path.join(tempDir, "file1.txt").replace(/\\/g, "/"));
     const file3Stats = await fs.promises.stat(
-      path.join(tempDir, "subdir", "file3.txt")
+      path.join(tempDir, "subdir", "file3.txt").replace(/\\/g, "/")
     );
 
     mockGcpClient.listContent.mockResolvedValueOnce([
-      { name: path.join(destinationPath, "file1.txt"), size: file1Stats.size },
+      { name: path.join(destinationPath, "file1.txt").replace(/\\/g, "/"), size: file1Stats.size },
       {
-        name: path.join(destinationPath, "subdir/file3.txt"),
+        name: path.join(destinationPath, "subdir/file3.txt").replace(/\\/g, "/"),
         size: file3Stats.size,
       },
     ]);
@@ -103,14 +103,14 @@ describe("SyncClient", () => {
     expect(result.uploadedFiles).toHaveLength(1);
     expect(result.totalFilesUploaded).toBe(1);
     expect(result.uploadedFiles).toContain(
-      path.join(destinationPath, "file2.txt")
+      path.join(destinationPath, "file2.txt").replace(/\\/g, "/")
     );
 
     // Verify uploadFile was called only once with correct destination path
     expect(mockGcpClient.uploadFile).toHaveBeenCalledTimes(1);
     expect(mockGcpClient.uploadFile).toHaveBeenCalledWith(
       path.join(tempDir, "file2.txt"),
-      path.join(destinationPath, "file2.txt")
+      path.join(destinationPath, "file2.txt").replace(/\\/g, "/")
     );
   });
 
@@ -129,11 +129,11 @@ describe("SyncClient", () => {
 
     // Verify file1.txt was uploaded again due to size difference
     expect(result.uploadedFiles).toContain(
-      path.join(destinationPath, "file1.txt")
+      path.join(destinationPath, "file1.txt").replace(/\\/g, "/")
     );
     expect(mockGcpClient.uploadFile).toHaveBeenCalledWith(
       path.join(tempDir, "file1.txt"),
-      path.join(destinationPath, "file1.txt")
+      path.join(destinationPath, "file1.txt").replace(/\\/g, "/")
     );
   });
 
@@ -157,23 +157,23 @@ describe("SyncClient", () => {
     // Verify all files are uploaded to the correct destination path
     expect(result.uploadedFiles).toHaveLength(3);
     expect(result.uploadedFiles).toEqual([
-      path.join(destinationPath, "file1.txt"),
-      path.join(destinationPath, "file2.txt"),
-      path.join(destinationPath, "subdir/file3.txt"),
+      path.join(destinationPath, "file1.txt").replace(/\\/g, "/"),
+      path.join(destinationPath, "file2.txt").replace(/\\/g, "/"),
+      path.join(destinationPath, "subdir/file3.txt").replace(/\\/g, "/"),
     ]);
 
     // Verify uploadFile was called with correct destination paths
     expect(mockGcpClient.uploadFile).toHaveBeenCalledWith(
       path.join(tempDir, "file1.txt"),
-      path.join(destinationPath, "file1.txt")
+      path.join(destinationPath, "file1.txt").replace(/\\/g, "/")
     );
     expect(mockGcpClient.uploadFile).toHaveBeenCalledWith(
       path.join(tempDir, "file2.txt"),
-      path.join(destinationPath, "file2.txt")
+      path.join(destinationPath, "file2.txt").replace(/\\/g, "/")
     );
     expect(mockGcpClient.uploadFile).toHaveBeenCalledWith(
       path.join(tempDir, "subdir/file3.txt"),
-      path.join(destinationPath, "subdir/file3.txt")
+      path.join(destinationPath, "subdir/file3.txt").replace(/\\/g, "/")
     );
 
     // Verify listContent was called with the correct destination path
@@ -182,4 +182,26 @@ describe("SyncClient", () => {
       destinationPath
     );
   });
+
+  it("should return paths with forward slashes even on Windows", async () => {
+    // Create a nested directory structure with backslashes
+    const nestedDir = path.join(tempDir, "nested", "deep", "dir");
+    await fs.promises.mkdir(nestedDir, { recursive: true });
+    await fs.promises.writeFile(
+      path.join(nestedDir, "test.txt"),
+      "test content"
+    );
+
+    // Get the files using listFiles
+    const files = await (syncClient as any).listFiles();
+
+    // Find the nested file path
+    const nestedFilePath = files.find(([_, path]: [string, string]) => path.includes("test.txt"))?.[1];
+    
+    // Verify the nested path uses forward slashes
+    expect(nestedFilePath).not.toContain("\\");
+    expect(nestedFilePath).toContain("/");
+    expect(nestedFilePath).toBe("nested/deep/dir/test.txt");
+  });
+
 });
