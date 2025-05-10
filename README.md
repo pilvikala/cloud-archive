@@ -1,6 +1,8 @@
 # Cloud Archiver
 
-This is a CLI tool that syncs a local folder to your GCP bucket
+This is a CLI tool that syncs a local folder to your GCP bucket.
+
+Check out the [Cloud Archive UI](https://github.com/pilvikala/cloud-archive-ui) project for an app to share the contents of your archive bucket with your family easily.
 
 ## Configuration
 
