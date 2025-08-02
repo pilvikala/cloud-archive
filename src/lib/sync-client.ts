@@ -68,8 +68,9 @@ export class SyncClient {
       const stats = await fs.promises.stat(absolutePath);
       const destinationPath = path.join(this.destinationPath, relativePath).replace(/\\/g, "/");
       const existingSize = existingFilesMap.get(destinationPath);
-
+      
       if (!existingSize || existingSize !== stats.size) {
+        if(existingSize === 0) console.warn(`File ${destinationPath} is empty, will be uploaded again.`);
         filesToUpload.push([absolutePath, destinationPath, stats.size]);
       }
     }
