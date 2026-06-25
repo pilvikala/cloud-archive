@@ -1,114 +1,123 @@
-import { Storage, Bucket, FileMetadata } from "@google-cloud/storage";
+import { Storage, FileMetadata } from "@google-cloud/storage";
 import { GcpClient } from "./gcp-client";
+import { PassThrough } from "stream";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
-// Mock the entire @google-cloud/storage module
-jest.mock("@google-cloud/storage", () => {
-  const mockUpload = jest.fn().mockResolvedValue([{}]);
-  const mockGetFiles = jest
-    .fn()
-    .mockResolvedValue([[{ name: "file1.txt" }, { name: "file2.txt" }]]);
-  const mockBucket = {
-    upload: mockUpload,
-    getFiles: mockGetFiles,
-  };
-  const mockStorage = {
-    bucket: jest.fn().mockReturnValue(mockBucket),
-  };
-  return {
-    Storage: jest.fn().mockImplementation(() => mockStorage),
-    Bucket: jest.fn(),
-  };
-});
+const MockStorage = Storage as jest.MockedClass<typeof Storage>;
+
+jest.mock("@google-cloud/storage");
 
 describe("GcpClient", () => {
   let gcpClient: GcpClient;
-  const mockBucketName = "test-bucket";
-  const mockFilePath = "/path/to/local/file.txt";
-  const mockDestinationPath = "path/in/bucket/file.txt";
+  let mockWriteStream: PassThrough;
+  let mockFile: { createWriteStream: jest.Mock };
+  let mockBucket: { file: jest.Mock; getFiles: jest.Mock };
+  let tempDir: string;
 
   beforeEach(() => {
-    // Reset all mocks before each test
     jest.clearAllMocks();
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = "/fake/credentials.json";
+    process.env.NODE_ENV = "test";
 
-    // Mock process.env
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = "/path/to/credentials.json";
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gcp-test-"));
 
-    gcpClient = new GcpClient(mockBucketName);
+    mockWriteStream = new PassThrough();
+    mockFile = { createWriteStream: jest.fn().mockReturnValue(mockWriteStream) };
+    mockBucket = {
+      file: jest.fn().mockReturnValue(mockFile),
+      getFiles: jest.fn().mockResolvedValue([[]]),
+    };
+
+    MockStorage.prototype.bucket = jest.fn().mockReturnValue(mockBucket);
+
+    gcpClient = new GcpClient("test-bucket");
+  });
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
   describe("uploadFile", () => {
-    it("should call bucket.upload with correct parameters", async () => {
-      // Act
-      await gcpClient.uploadFile(mockFilePath, mockDestinationPath);
+    it("should upload file using a resumable write stream to the correct destination", async () => {
+      const testFile = path.join(tempDir, "test.txt");
+      fs.writeFileSync(testFile, "Hello World");
 
-      // Assert
-      const mockStorage = new Storage();
-      const mockBucket = mockStorage.bucket(mockBucketName);
+      await gcpClient.uploadFile(testFile, "bucket/dest.txt");
 
-      expect(mockStorage.bucket).toHaveBeenCalledWith(mockBucketName);
-      expect(mockBucket.upload).toHaveBeenCalledWith(mockFilePath, {
-        destination: mockDestinationPath,
-        metadata: {
-          cacheControl: "public, max-age=31536000",
-        },
-      });
-    });
-
-    it("should throw error when upload fails", async () => {
-      // Arrange
-      const mockError = new Error("Upload failed");
-      const mockStorage = new Storage();
-      const mockBucket = mockStorage.bucket(mockBucketName);
-      (mockBucket.upload as jest.Mock).mockRejectedValueOnce(mockError);
-
-      // Act & Assert
-      await expect(
-        gcpClient.uploadFile(mockFilePath, mockDestinationPath)
-      ).rejects.toThrow("Upload failed");
+      expect(mockBucket.file).toHaveBeenCalledWith("bucket/dest.txt");
+      expect(mockFile.createWriteStream).toHaveBeenCalledWith(
+        expect.objectContaining({
+          resumable: true,
+          metadata: { cacheControl: "public, max-age=31536000" },
+        })
+      );
     });
 
     it("should normalize Windows-style paths to use forward slashes", async () => {
-      // Arrange
-      const windowsPath = "path\\in\\bucket\\file.txt";
-      const expectedPath = "path/in/bucket/file.txt";
-      const mockStorage = new Storage();
-      const mockBucket = mockStorage.bucket(mockBucketName);
+      const testFile = path.join(tempDir, "test.txt");
+      fs.writeFileSync(testFile, "content");
 
-      // Act
-      await gcpClient.uploadFile(mockFilePath, windowsPath);
+      await gcpClient.uploadFile(testFile, "path\\to\\file.txt");
 
-      // Assert
-      expect(mockBucket.upload).toHaveBeenCalledWith(mockFilePath, {
-        destination: expectedPath,
-        metadata: {
-          cacheControl: "public, max-age=31536000",
-        },
-      });
+      expect(mockBucket.file).toHaveBeenCalledWith("path/to/file.txt");
     });
 
     it("should handle paths with mixed separators", async () => {
-      // Arrange
-      const mixedPath = "path\\in/bucket\\file.txt";
-      const expectedPath = "path/in/bucket/file.txt";
-      const mockStorage = new Storage();
-      const mockBucket = mockStorage.bucket(mockBucketName);
+      const testFile = path.join(tempDir, "test.txt");
+      fs.writeFileSync(testFile, "content");
 
-      // Act
-      await gcpClient.uploadFile(mockFilePath, mixedPath);
+      await gcpClient.uploadFile(testFile, "path\\to/bucket\\file.txt");
 
-      // Assert
-      expect(mockBucket.upload).toHaveBeenCalledWith(mockFilePath, {
-        destination: expectedPath,
-        metadata: {
-          cacheControl: "public, max-age=31536000",
-        },
+      expect(mockBucket.file).toHaveBeenCalledWith("path/to/bucket/file.txt");
+    });
+
+    it("should call onProgress callback with cumulative bytes and total during upload", async () => {
+      const content = "Hello World Test Content For Progress Tracking";
+      const testFile = path.join(tempDir, "test.txt");
+      fs.writeFileSync(testFile, content);
+      const totalBytes = fs.statSync(testFile).size;
+
+      const progressCallback = jest.fn();
+      await gcpClient.uploadFile(testFile, "dest.txt", progressCallback);
+
+      expect(progressCallback).toHaveBeenCalled();
+      const calls = progressCallback.mock.calls;
+      // Each call: (bytesUploaded, totalBytes)
+      calls.forEach(([uploaded, total]) => {
+        expect(total).toBe(totalBytes);
+        expect(uploaded).toBeGreaterThan(0);
+        expect(uploaded).toBeLessThanOrEqual(totalBytes);
       });
+      // Final call should report all bytes uploaded
+      const lastCall = calls[calls.length - 1];
+      expect(lastCall[0]).toBe(totalBytes);
+    });
+
+    it("should succeed without an onProgress callback", async () => {
+      const testFile = path.join(tempDir, "test.txt");
+      fs.writeFileSync(testFile, "content");
+
+      await expect(gcpClient.uploadFile(testFile, "dest.txt")).resolves.toBeUndefined();
+    });
+
+    it("should reject when the write stream emits an error", async () => {
+      const testFile = path.join(tempDir, "test.txt");
+      fs.writeFileSync(testFile, "content");
+
+      const uploadPromise = gcpClient.uploadFile(testFile, "dest.txt");
+
+      // Allow piping to start before injecting the error
+      await new Promise((r) => process.nextTick(r));
+      mockWriteStream.destroy(new Error("GCS write error"));
+
+      await expect(uploadPromise).rejects.toThrow("GCS write error");
     });
   });
 
   describe("listContent", () => {
     it("should return files with metadata from bucket", async () => {
-      // Arrange
       const mockPath = "test/path";
       const file1: FileMetadata = {
         bucket: "pilvikala-archive",
@@ -129,51 +138,37 @@ describe("GcpClient", () => {
       const file2: FileMetadata = {
         bucket: "pilvikala-archive",
         contentType: "video/avi",
-        id: "pilvikala-archive/Vánoční/Filmy/Bridget J/Bridget Jonesova S rozumem v koncich  CZ dabing  2004.avi/1745751502720618",
+        id: "pilvikala-archive/Vánoční/Filmy/Bridget J/file.avi/1745751502720618",
         kind: "storage#object",
         md5Hash: "h3B//Aa4tATSU1CPTIW+eg==",
-        mediaLink:
-          "https://storage.googleapis.com/download/storage/v1/b/pilvikala-archive/o/V%C3%A1no%C4%8Dn%C3%AD%2FFilmy%2FBridget%20J%2FBridget%20Jonesova%20S%20rozumem%20v%20koncich%20%20CZ%20dabing%20%202004.avi?generation=1745751502720618&alt=media",
-        name: "Vánoční/Filmy/Bridget J/Bridget Jonesova S rozumem v koncich  CZ dabing  2004.avi",
-        selfLink:
-          "https://www.googleapis.com/storage/v1/b/pilvikala-archive/o/V%C3%A1no%C4%8Dn%C3%AD%2FFilmy%2FBridget%20J%2FBridget%20Jonesova%20S%20rozumem%20v%20koncich%20%20CZ%20dabing%20%202004.avi",
+        mediaLink: "https://storage.googleapis.com/...",
+        name: "Vánoční/Filmy/Bridget J/file.avi",
+        selfLink: "https://www.googleapis.com/storage/v1/b/...",
         size: "724254720",
         timeCreated: "2025-04-27T10:58:22.723Z",
         timeFinalized: "2025-04-27T10:58:22.723Z",
         updated: "2025-04-27T10:58:22.723Z",
       };
-
       const expectedFiles = [
         { ...file1, size: 0 },
         { ...file2, size: 724254720 },
       ];
-      const mockStorage = new Storage();
-      const mockBucket = mockStorage.bucket(mockBucketName);
-      (mockBucket.getFiles as jest.Mock).mockResolvedValueOnce([
+      mockBucket.getFiles.mockResolvedValueOnce([
         [{ metadata: file1 }, { metadata: file2 }],
       ]);
 
-      // Act
-      const result = await gcpClient.listContent(mockBucketName, mockPath);
+      const result = await gcpClient.listContent("test-bucket", mockPath);
 
-      // Assert
-      expect(mockStorage.bucket).toHaveBeenCalledWith(mockBucketName);
       expect(mockBucket.getFiles).toHaveBeenCalledWith({ prefix: mockPath });
       expect(result).toEqual(expectedFiles);
     });
 
     it("should throw error when listing fails", async () => {
-      // Arrange
-      const mockPath = "test/path";
-      const mockError = new Error("List failed");
-      const mockStorage = new Storage();
-      const mockBucket = mockStorage.bucket(mockBucketName);
-      (mockBucket.getFiles as jest.Mock).mockRejectedValueOnce(mockError);
+      mockBucket.getFiles.mockRejectedValueOnce(new Error("List failed"));
 
-      // Act & Assert
-      await expect(
-        gcpClient.listContent(mockBucketName, mockPath)
-      ).rejects.toThrow("List failed");
+      await expect(gcpClient.listContent("test-bucket", "test/path")).rejects.toThrow(
+        "List failed"
+      );
     });
   });
 });

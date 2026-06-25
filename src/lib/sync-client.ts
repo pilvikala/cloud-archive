@@ -102,8 +102,11 @@ export class SyncClient {
     // Upload files one by one
     for (const [absolutePath, destinationPath, size] of filesToUpload) {
       try {
-        onProgress(`Uploading ${destinationPath}, size ${displayFileSize(size)}`);
-        await this.gcpClient.uploadFile(absolutePath, destinationPath);
+        onProgress(`Uploading ${destinationPath} (${displayFileSize(size)})`);
+        await this.gcpClient.uploadFile(absolutePath, destinationPath, (bytesUploaded, totalBytes) => {
+          const percentage = Math.round((bytesUploaded / totalBytes) * 100);
+          onProgress(`  ${displayFileSize(bytesUploaded)} / ${displayFileSize(totalBytes)} (${percentage}%)`);
+        });
         sizeUploaded += size;
         fileCount++;
         uploadedFiles.push(destinationPath);
