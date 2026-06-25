@@ -3,7 +3,6 @@ import { JWT } from "google-auth-library";
 import { Readable } from "stream";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
-import * as path from "path";
 
 dotenv.config();
 
