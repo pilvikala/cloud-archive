@@ -3,7 +3,6 @@
 import { Command } from "commander";
 import { GcpClient } from "./lib/gcp-client";
 import { SyncClient } from "./lib/sync-client";
-import { displayFileSize } from "./lib/display-file-size";
 import { version } from "./version";
 
 const program = new Command();
@@ -55,8 +54,19 @@ program
     try {
       const gcpClient = new GcpClient(bucket);
       const syncClient = new SyncClient(path, destinationPath, gcpClient);
+      let inProgressLine = false;
       await syncClient.sync((message) => {
-        console.log(message);
+        const isProgress = /\(\d+%\)$/.test(message);
+        if (isProgress) {
+          process.stdout.write(`\r${message}`);
+          inProgressLine = true;
+        } else {
+          if (inProgressLine) {
+            process.stdout.write("\n");
+            inProgressLine = false;
+          }
+          console.log(message);
+        }
       });
     } catch (error) {
       console.error("Failed to sync the folder:", error);
