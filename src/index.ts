@@ -58,7 +58,7 @@ program
       await syncClient.sync((message) => {
         const isProgress = /\(\d+%\)$/.test(message);
         if (isProgress) {
-          process.stdout.write(`\r${message}`);
+          process.stdout.write(`\r${message}`.padEnd(80));
           inProgressLine = true;
         } else {
           if (inProgressLine) {
