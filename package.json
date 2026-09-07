@@ -23,7 +23,7 @@
     "build:win-arm64": "npm run version:from-tag:optional && pkg . --public --no-bytecode --targets node22-win-arm64 --output dist/win-arm64/cloud-archive.exe && tar -c dist/win-arm64/cloud-archive.exe>dist/win-arm64.tar"
   },
   "dependencies": {
-    "@google-cloud/storage": "^7.7.0",
+    "@google-cloud/storage": "^8.0.1",
     "commander": "^11.1.0",
     "dotenv": "^16.4.1"
   },
